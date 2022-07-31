@@ -9,16 +9,17 @@ namespace ExcelReader
 {
     public class GetExcelHandler
     {
-        public List<T> GetList<T>(ExcelWorksheet worksheet)
+        public static List<T> GetList<T>(ExcelWorksheet worksheet) where T : class
         {
             List<T> list = new List<T>();
+
             var columnInformation = Enumerable.Range(1, worksheet.Dimension.Columns).ToList().Select(n =>
                 new
                 {
                     Index = n,
                     ColumnName = worksheet.Cells[1, n].Value.ToString()
                 });
-            //2
+
             for (int row = 2; row <= worksheet.Dimension.Rows; row++)
             {
                 T obj = (T)Activator.CreateInstance(typeof(T));
@@ -28,7 +29,6 @@ namespace ExcelReader
                     var val = worksheet.Cells[row, col].Value;
                     var propType = prop.PropertyType;
 
-
                     prop.SetValue(obj, Convert.ChangeType(val, propType));
                 }
                 list.Add(obj);
@@ -36,7 +36,7 @@ namespace ExcelReader
             return list;
         }
 
-        public void ReadExcelSheet()
+        public static void ReadExcelSheet()
         {
             DatabaseManager database = new();
             FileInfo file = new FileInfo(@"C:\Users\im_07\documents\ExcelToDB.xlsx");
