@@ -6,7 +6,14 @@ GetExcelHandler.ReadExcelSheet();
 
 var listOfPeople = DatabaseManager.Get();
 
-TableVisualtion.ShowTable(listOfPeople);
+if (listOfPeople.Any())
+{
+    TableVisualtion.ShowTable(listOfPeople);
+}
+
+Console.WriteLine("Press any key to exit the program");
+Console.ReadKey();
+
 
 
 

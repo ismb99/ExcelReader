@@ -9,12 +9,12 @@ namespace ExcelReader
 {
     public class TableVisualtion
     {
-        public static void ShowTable(List<PersonDto> personDtos)
+        public static void ShowTable(List<Person> person)
         {
             Console.WriteLine("\n\n");
 
             ConsoleTableBuilder
-                .From(personDtos)
+                .From(person)
                 .WithTitle("Excel People")
                 .ExportAndWriteLine();
             Console.WriteLine("\n\n");

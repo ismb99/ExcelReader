@@ -10,8 +10,11 @@ namespace ExcelReader
     {
         public static int GetNumInput(string message)
         {
-            Console.Write(message);
+            if (message is not null)
+                Console.Write(message);
+
             string input = Console.ReadLine();
+
             while (!int.TryParse(input, out _) || int.Parse(input) < 0)
             {
                 Console.WriteLine("Invalid input, try again");
@@ -23,7 +26,9 @@ namespace ExcelReader
 
         public static string GetStringInput(string message)
         {
-            Console.Write(message);
+            if (message is not null)
+                Console.Write(message);
+
             string name = Console.ReadLine();
 
             while (String.IsNullOrEmpty(name))

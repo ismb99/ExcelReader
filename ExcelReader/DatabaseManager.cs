@@ -5,35 +5,45 @@ namespace ExcelReader
 {
     public class DatabaseManager
     {
-        const string connectionString = "Server=(localdb)\\Local;Integrated Security=True";
+        const string connectionString = "Server=localhost;Database=master; Integrated Security=true";
 
-        const string excelReaderConnectionString = "Server=(localdb)\\Local;Initial Catalog=ExcelReaderDb; Integrated Security=True";
+        const string excelReaderConnectionString = "Server=localhost;Database=ExcelReaderDb; Integrated Security=true";
 
         public static void CheckDatabase()
         {
-            // This is an application that will read data from an Excel spreadsheet into a database
-            // When the application starts, it should delete the database if it exists,
-            // create a new one, create all tables, read from Excel, seed into the database.
-            // You shouldn't read into Json first.
-            // Once the database is populated, you'll fetch data from it and show it in the console.
-            // You should tell the user what it's doing: (i.e. reading from excel; creating tables, etc)
-            // The application will be written for a known table, you don't need to make it dynamic.
-            // You should tell the user what it's doing: (i.e. reading from excel; creating tables, etc)
-
-
-            //var input = UserInputs.GetStringInput("Do you want to delete database, perss y: ");
-            //if (input.ToLower() == "y")
-            using (var connection = new SqlConnection(connectionString))
+            var dbExists = CheckDatabaseExists();
+            if (!dbExists)
             {
-                using (var tableCmd = connection.CreateCommand())
+                Console.WriteLine("Database does not exist. Creating database.....");
+                CreateDatabase();
+            }
+            else
+            {
+                var input = UserInputs.GetStringInput("Do you want to delete and recreate your database?. Press: \"y\" to delete the database. Press any other key to continue");
+                if (input.ToLower() == "y")
                 {
-                    connection.Open();
-                    tableCmd.CommandText =
-                    $@"DROP DATABASE IF EXISTS ExcelReaderDb";
-                    tableCmd.ExecuteNonQuery();
+                    try
+                    {
+                        using (var connection = new SqlConnection(connectionString))
+                        {
+                            using (var tableCmd = connection.CreateCommand())
+                            {
+                                connection.Open();
+                                tableCmd.CommandText =
+                                $@"DROP DATABASE IF EXISTS ExcelReaderDb";
+                                tableCmd.ExecuteNonQuery();
+                            }
+                        }
+                        CreateDatabase();
+                    }
+                    catch (Exception e)
+                    {
+
+                        Console.WriteLine(e.Message);
+                    }
                 }
             }
-            CreateDatabase();
+
         }
 
         private static void CreateDatabase()
@@ -52,6 +62,7 @@ namespace ExcelReader
                            END;
                          ";
                         tableCmd.ExecuteNonQuery();
+                        Console.WriteLine("Database \"ExcelReaderDb\" created");
                     }
                 }
                 CreateTable();
@@ -81,6 +92,7 @@ namespace ExcelReader
                           City varchar(50) NOT NULL,
                             );";
                         tableCmd.ExecuteNonQuery();
+                        Console.WriteLine("\"Person\" Table created");
                     }
                 }
             }
@@ -91,7 +103,7 @@ namespace ExcelReader
 
         }
 
-        public void WriteExcelToDatabase(List<Person> person)
+        public static void WriteExcelToDatabase(List<Person> person)
         {
             try
             {
@@ -115,9 +127,9 @@ namespace ExcelReader
             }
         }
 
-        public static List<PersonDto> Get()
+        public static List<Person> Get()
         {
-            List<PersonDto> people = new List<PersonDto>();
+            List<Person> people = new List<Person>();
             using (var connection = new SqlConnection(excelReaderConnectionString))
             {
                 using (var tableCmd = connection.CreateCommand())
@@ -130,7 +142,7 @@ namespace ExcelReader
                     {
                         while (reader.Read())
                         {
-                            people.Add(new PersonDto()
+                            people.Add(new Person()
                             {
                                 Id = reader.GetInt32(0),
                                 FirstName = reader.GetString(1),
@@ -148,5 +160,19 @@ namespace ExcelReader
             }
             return people;
         }
+
+        public static bool CheckDatabaseExists()
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                using (var command = new SqlCommand($"SELECT db_id('ExcelReaderDb')", connection))
+                {
+                    connection.Open();
+                    return (command.ExecuteScalar() != DBNull.Value);
+                }
+            }
+        }
+
     }
+
 }
