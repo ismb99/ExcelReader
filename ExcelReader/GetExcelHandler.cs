@@ -11,7 +11,7 @@ namespace ExcelReader
     {
         public static List<T> GetList<T>(ExcelWorksheet worksheet) where T : class
         {
-            List<T> list = new List<T>();
+            List<T> list = new();
 
             var columnInformation = Enumerable.Range(1, worksheet.Dimension.Columns).ToList().Select(n =>
                 new
@@ -23,32 +23,42 @@ namespace ExcelReader
             for (int row = 2; row <= worksheet.Dimension.Rows; row++)
             {
                 T obj = (T)Activator.CreateInstance(typeof(T));
-                foreach (var prop in typeof(T).GetProperties())
+                if (obj is not null)
                 {
-                    int col = columnInformation.SingleOrDefault(c => c.ColumnName == prop.Name).Index;
-                    var val = worksheet.Cells[row, col].Value;
-                    var propType = prop.PropertyType;
+                    foreach (var prop in typeof(T).GetProperties())
+                    {
+                        if (columnInformation is not null)
+                        {
+                            int col = columnInformation.SingleOrDefault(c => c.ColumnName == prop?.Name).Index;
+                            var val = worksheet.Cells[row, col].Value;
+                            var propType = prop.PropertyType;
 
-                    prop.SetValue(obj, Convert.ChangeType(val, propType));
+                            prop.SetValue(obj, Convert.ChangeType(val, propType));
+                        }
+                        
+                    }
+                    list.Add(obj);
                 }
-                list.Add(obj);
+               
             }
             return list;
         }
 
+
         public static void ReadExcelSheet()
         {
-            DatabaseManager database = new();
-            FileInfo file = new FileInfo(@"C:\Users\im_07\documents\ExcelToDB.xlsx");
+            FileInfo file = new FileInfo(@"C:\Users\jazzy\source\repos\ExcelReader\ExcelToDB.xlsx");
 
             using (ExcelPackage excelPackage = new ExcelPackage(file))
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 var excelSheet = excelPackage.Workbook.Worksheets.First();
-                var person = GetList<Person>(excelSheet);
-                database.WriteExcelToDatabase(person);
+                var personDtoList = GetList<PersonDto>(excelSheet);
+
+                List<Person> mappedPersonList = Mapper.FromDtoMapper(personDtoList);
+
+                DatabaseManager.WriteExcelToDatabase(mappedPersonList);
             }
         }
-       
     }
 }
